@@ -135,6 +135,7 @@ function createSpyRepositories() {
     algorithmProblems: {
       list: () => [],
       getById: () => null,
+      getByProblem: () => null,
       insert: () => undefined,
       update: () => undefined,
       deleteById: () => false,

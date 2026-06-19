@@ -83,9 +83,9 @@ Both `dev:http` and `dev:ui` bind to `0.0.0.0` — reachable from any device on 
 - Keep it simple and iterative — learning project, not production-grade
 - MCP concepts explored: typed tool schemas (Zod), session state machine, microservice-style MCP split, npm workspaces, spaced repetition scheduling, scheduled tasks
 
-## Knowledge Storage
+## Knowledge Storage for the design and code questions
 
-Topics, questions, concepts, and warm-up MCQs live in SQLite. The five relevant tables are: `topics`, `topic_questions`, `topic_concepts`, `warmup_questions`, `warmup_history`. To add or update topic content, edit the DB directly — there are no Markdown knowledge files in the runtime path.
+Topics, questions, concepts, and warm-up MCQs live in SQLite. The relevant tables are: `topics`, `topic_questions`, `topic_concepts`, `warmup_questions`, `warmup_history`, `algorithm_problems`. To add or update topic content, edit the DB directly.
 
 ## Package-specific context
 

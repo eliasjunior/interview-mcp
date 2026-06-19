@@ -1,6 +1,6 @@
 import type { AIProvider } from "../ai/index.js";
 import type { KnowledgeStore } from "../knowledge/index.js";
-import type { Concept, Evaluation, Exercise, Flashcard, FlashcardAnswer, KnowledgeGraph, Mistake, Skill, Session, TopicPlan } from "@mock-interview/shared";
+import type { AlgorithmProblemTrackerItem, Concept, Evaluation, Exercise, Flashcard, FlashcardAnswer, KnowledgeGraph, Mistake, Skill, Session, TopicPlan } from "@mock-interview/shared";
 import type { SessionDeletionPreview } from "../sessions/deleteFlow.js";
 import type { StoredCodeChallenge } from "../repositories/codeChallengeRepository.js";
 
@@ -48,6 +48,8 @@ export interface ToolDeps {
   saveCodeChallenge?(challenge: StoredCodeChallenge): void;
   exercisesDir: string;
   scopesDir: string;
+
+  saveAlgorithmProblem(item: AlgorithmProblemTrackerItem): void;
 
   saveWarmupHistory(questionStem: string, topicTitle: string, sessionId: string, correct: boolean): void;
 

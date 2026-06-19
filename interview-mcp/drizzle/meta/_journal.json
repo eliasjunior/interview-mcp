@@ -169,6 +169,13 @@
       "when": 1781798400000,
       "tag": "0023_algorithm_problem_descriptions",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1781884800000,
+      "tag": "0024_algorithm_logged_flag",
+      "breakpoints": true
     }
   ]
 }

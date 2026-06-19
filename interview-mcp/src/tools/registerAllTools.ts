@@ -35,6 +35,7 @@ import { registerEvaluateFlashcardTool } from "./evaluateFlashcard.js";
 import { registerSaveFlashcardEvaluationTool } from "./saveFlashcardEvaluation.js";
 import { registerConfigureCodeChallengeTool } from "./configureCodeChallenge.js";
 import { registerRunCodeTool } from "./runCode.js";
+import { registerLogAlgorithmProblemTool } from "./logAlgorithmProblem.js";
 
 export function registerAllTools(server: McpServer, deps: ToolDeps) {
   registerServerStatusTool(server, deps);
@@ -72,4 +73,5 @@ export function registerAllTools(server: McpServer, deps: ToolDeps) {
   registerSaveFlashcardEvaluationTool(server, deps);
   registerConfigureCodeChallengeTool(server, deps);
   registerRunCodeTool(server, deps);
+  registerLogAlgorithmProblemTool(server, deps);
 }

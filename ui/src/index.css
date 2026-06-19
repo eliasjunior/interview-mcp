@@ -3740,11 +3740,22 @@ html, body, #root {
   font-weight: 700;
 }
 
+.algorithm-header-actions {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+}
+
 .algorithm-summary span {
   padding: 5px 9px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--bg-soft);
+}
+
+.algorithm-collapse-all {
+  padding: 8px 12px;
+  font-size: 0.78rem;
 }
 
 .algorithm-error {
@@ -3755,10 +3766,42 @@ html, body, #root {
   display: grid;
   gap: 14px;
   margin-bottom: 22px;
-  padding: 16px;
+  padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--card);
+}
+
+.algorithm-entry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.algorithm-entry-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.algorithm-entry-toggle:hover {
+  color: var(--accent);
+}
+
+.algorithm-entry-hint {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: right;
 }
 
 .algorithm-entry-grid {
@@ -3886,6 +3929,24 @@ html, body, #root {
   line-height: 1.45;
 }
 
+.algorithm-problem-link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.algorithm-problem-link:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .algorithm-table tr:last-child td {
   border-bottom: none;
 }
@@ -3989,6 +4050,19 @@ html, body, #root {
 
   .algorithm-summary {
     justify-content: flex-start;
+  }
+
+  .algorithm-header-actions {
+    justify-items: start;
+  }
+
+  .algorithm-entry-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .algorithm-entry-hint {
+    text-align: left;
   }
 
   .algorithm-entry-grid {

@@ -61,6 +61,14 @@ export function registerEndInterviewTool(server: McpServer, deps: ToolDeps) {
         };
       }
 
+      // ── Code interview: require log_algorithm_problem before finalizing ────────
+      if (session.interviewType === "code" && !session.algorithmLogged) {
+        return deps.stateError(
+          "Cannot end a code interview without logging the algorithm problem first. " +
+          "Call log_algorithm_problem with the problem details and sessionId, then call end_interview again."
+        );
+      }
+
       // ── Full interview summary ───────────────────────────────────────────────
       const { summary, concepts, reportFile } = await deps.finalizeSession(session, sessions);
       const recommendations = buildEndInterviewRecommendations(session, deps.loadMistakes(session.topic));
@@ -93,6 +101,12 @@ export function registerEndInterviewTool(server: McpServer, deps: ToolDeps) {
                   }
                 : null,
             },
+            algorithmTracker: session.interviewType === "code"
+              ? {
+                  required: true,
+                  hint: "This was a code interview. You MUST call log_algorithm_problem with the problem details before ending this session.",
+                }
+              : null,
           }),
         }],
       };

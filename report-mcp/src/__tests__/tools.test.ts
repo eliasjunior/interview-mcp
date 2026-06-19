@@ -56,8 +56,8 @@ function makeSession(overrides: Partial<Session> = {}): Session {
 
 function makeGraph(): KnowledgeGraph {
   return {
-    nodes: [{ id: "jwt", label: "JWT", cluster: "security", sessionIds: ["session-1"] }],
-    edges: [{ source: "jwt", target: "claims", weight: 1 }],
+    nodes: [{ id: "jwt", label: "JWT", clusters: ["security"] }],
+    edges: [{ source: "jwt", target: "claims", weight: 1, kind: "cooccurrence" as const, relation: "related" }],
     sessions: ["session-1"],
   };
 }
@@ -130,18 +130,24 @@ function makeDeps(overrides: Partial<ToolDeps> = {}): ToolDeps {
         gapSummary: "Missed issuer and expiration checks.",
       })),
     buildProgressOverview: () => ({
+      generatedAt: "2026-03-28T09:00:00.000Z",
+      filters: { sessionKind: "all" as const, weakScoreThreshold: 3, recentSessionsLimit: 5, topicLimit: 10 },
       totals: {
         sessions: 1,
+        topics: 1,
         questionsAnswered: 1,
         avgScore: "2.0",
         weakQuestions: 1,
         weakQuestionRate: "100.0%",
+        followUpCount: 1,
         followUpRate: "100.0%",
+        firstSessionAt: "2026-03-28T09:00:00.000Z",
+        lastSessionAt: "2026-03-28T09:20:00.000Z",
       },
       scoreDistribution: { "1": 0, "2": 1, "3": 0, "4": 0, "5": 0 },
-      scoreTrend: [{ sessionId: "session-1", createdAt: "2026-03-28T09:00:00.000Z", avgScore: "2.0", topic: "JWT" }],
-      recentSessions: [{ sessionId: "session-1", topic: "JWT", createdAt: "2026-03-28T09:00:00.000Z", avgScore: "2.0", weakQuestionRate: "100.0%" }],
-      topicBreakdown: [{ topic: "JWT", sessionCount: 1, avgScore: "2.0", weakQuestionRate: "100.0%", latestSessionAt: "2026-03-28T09:00:00.000Z" }],
+      scoreTrend: [{ sessionId: "session-1", endedAt: "2026-03-28T09:20:00.000Z", avgScore: "2.0", topic: "JWT" }],
+      recentSessions: [{ sessionId: "session-1", topic: "JWT", sessionKind: "interview" as const, createdAt: "2026-03-28T09:00:00.000Z", endedAt: "2026-03-28T09:20:00.000Z", avgScore: "2.0", questionCount: 1, weakQuestionCount: 1, followUpCount: 1 }],
+      topicBreakdown: [{ topic: "JWT", sessionCount: 1, avgScore: "2.0", latestScore: "2.0", deltaFromFirst: "0.0", totalQuestions: 1, weakQuestions: 1, weakQuestionRate: "100.0%", lastSessionAt: "2026-03-28T09:20:00.000Z" }],
       repeatedTopics: [],
     }),
     countLines: (text) => text.split("\n").length,
@@ -250,13 +256,19 @@ describe("report tool handlers", () => {
   test("get_progress_overview returns stateError when no ended sessions match and succeeds otherwise", async () => {
     const emptyDeps = makeDeps({
       buildProgressOverview: () => ({
+        generatedAt: "2026-03-28T09:00:00.000Z",
+        filters: { sessionKind: "interview" as const, weakScoreThreshold: 3, recentSessionsLimit: 5, topicLimit: 10 },
         totals: {
           sessions: 0,
+          topics: 0,
           questionsAnswered: 0,
           avgScore: "N/A",
           weakQuestions: 0,
           weakQuestionRate: "0.0%",
+          followUpCount: 0,
           followUpRate: "0.0%",
+          firstSessionAt: null,
+          lastSessionAt: null,
         },
         scoreDistribution: { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 },
         scoreTrend: [],
@@ -291,7 +303,7 @@ describe("report tool handlers", () => {
     const deps = makeDeps({
       ai: {
         generateDeeperDives: async () => ["Explain issuer, audience, and expiration validation."],
-      } as ToolDeps["ai"],
+      } as unknown as ToolDeps["ai"],
       saveSessions: (sessions) => {
         savedSnapshot = sessions;
       },
@@ -302,7 +314,7 @@ describe("report tool handlers", () => {
     assert.equal(payload.sessionId, "session-1");
     assert.equal(payload.deeperDivesGenerated, 1);
     assert.ok(payload.reportFile.endsWith("session-1.md"));
-    assert.equal(savedSnapshot?.["session-1"]?.evaluations[0]?.deeperDive, "Explain issuer, audience, and expiration validation.");
+    assert.equal(savedSnapshot!["session-1"]!.evaluations[0]?.deeperDive, "Explain issuer, audience, and expiration validation.");
   });
 
   test("generate_report_ui writes dataset/viewer files and stores strong answers", async () => {
@@ -335,7 +347,7 @@ describe("report tool handlers", () => {
 
     const dataset = JSON.parse(fs.readFileSync(payload.datasetFile, "utf8"));
     assert.equal(dataset.questions[0].strongAnswer, "Validate signature.\nCheck issuer.\nCheck expiration.");
-    assert.equal(storedSessions?.["session-1"]?.evaluations[0]?.strongAnswer, "Validate signature.\nCheck issuer.\nCheck expiration.");
+    assert.equal(storedSessions!["session-1"]!.evaluations[0]?.strongAnswer, "Validate signature.\nCheck issuer.\nCheck expiration.");
   });
 
   test("generate_report_ui rejects strong answers longer than three lines", async () => {

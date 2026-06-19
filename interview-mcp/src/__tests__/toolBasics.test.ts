@@ -127,6 +127,7 @@ function makeDeps(overrides: Partial<ToolDeps> = {}) {
     loadExercises: () => [],
     findExerciseByName: () => null,
     saveExercise: () => {},
+    saveAlgorithmProblem: () => {},
     exercisesDir: "/tmp/exercises",
     scopesDir: "/tmp/scopes",
     generateId: () => `generated-${mistakes.length + skills.length}`,

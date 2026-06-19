@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 
 import type { AIProvider } from "./ai/index.js";
 import { createKnowledgeStore, type KnowledgeStore } from "./knowledge/index.js";
-import type { Session, Concept, KnowledgeGraph, Flashcard, FlashcardAnswer, Mistake, Skill, Exercise, WarmUpLevel } from "@mock-interview/shared";
+import type { AlgorithmProblemTrackerItem, Session, Concept, KnowledgeGraph, Flashcard, FlashcardAnswer, Mistake, Skill, Exercise, WarmUpLevel } from "@mock-interview/shared";
 import { assertState } from "./stateUtils.js";
 import { generateId, findLast, calcAvgScore, buildSummary, buildReport, buildTranscript } from "./sessionUtils.js";
 import { mergeConceptsIntoGraph } from "./graphUtils.js";
@@ -128,6 +128,15 @@ function findExerciseByName(name: string): Exercise | null {
 
 function saveExercise(exercise: Exercise): void {
   repositories.exercises.insert(exercise);
+}
+
+function saveAlgorithmProblem(item: AlgorithmProblemTrackerItem): void {
+  const existing = repositories.algorithmProblems.getByProblem(item.problem);
+  if (existing) {
+    repositories.algorithmProblems.update({ ...item, id: existing.id, createdAt: existing.createdAt });
+  } else {
+    repositories.algorithmProblems.insert(item);
+  }
 }
 
 function findTopicPlan(topic: string) {
@@ -255,6 +264,7 @@ const deps: ToolDeps = {
   loadExercises,
   findExerciseByName,
   saveExercise,
+  saveAlgorithmProblem,
   getCodeChallenge: (sessionId) => repositories.codeChallenges.getBySessionId(sessionId),
   saveCodeChallenge: (challenge) => repositories.codeChallenges.upsert(challenge),
   loadWarmupStats(topicTitle, level) {

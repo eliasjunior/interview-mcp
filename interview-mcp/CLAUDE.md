@@ -29,14 +29,14 @@ interview-mcp/
 │   ├── server.ts               # MCP bootstrap, registers 26 tools
 │   ├── http.ts                 # Express REST API port 3001
 │   ├── tools/                  # One file per MCP tool
-│   ├── ai/                     # AIProvider port + Anthropic adapter (haiku model)
+│   ├── ai/                     # DEPRECATED, not using anymore - AIProvider port + Anthropic adapter (haiku model)
 │   ├── knowledge/              # DbKnowledgeStore — reads topics/questions/concepts from SQLite
 │   ├── interviewUtils.ts       # Pure utils: state guards, report builder, graph merge, flashcard generator
 │   └── srsUtils.ts             # SM-2 spaced repetition algorithm (pure, side-effect-free)
 ├── data/
-│   ├── app.db                  # Shared runtime database (sessions, graph, flashcards, knowledge tables)
+│   ├── app.db                  # Shared runtime database (sessions, graph, flashcards, algorithm, knowledge tables)
 │   └── reports/                # One .md report per completed session
-└── .env                        # ANTHROPIC_API_KEY, AI_ENABLED
+└── .env                        # NOT USING ANYMORE - ANTHROPIC_API_KEY, AI_ENABLED
 ```
 
 ### Knowledge tables (in `app.db`)
@@ -48,6 +48,7 @@ interview-mcp/
 | `topic_concepts` | Concept clusters per topic (core concepts, tradeoffs, etc.) |
 | `warmup_questions` | MCQ warm-up questions per topic/level |
 | `warmup_history` | Per-question correct/incorrect history for weighted selection |
+| `algorithm_problems` | Algorithm problems tracker record |
 
 To add or edit topic content: update the Markdown source under `data/knowledge/` then re-run the seed script to sync the DB.
 
@@ -181,8 +182,6 @@ export type InterviewType = 'design' | 'code'
 // Session.interviewType?: InterviewType   (absent on legacy sessions → treated as 'design')
 ```
 
-Currently only `'design'` is active. `'code'` is reserved for future algorithm/LeetCode-style questions.
-
 ### Available design topics
 
 Topics are stored in the `topics` table in `app.db`. Use `list_topics` to get the current list at runtime. Markdown sources live under `data/knowledge/design-interview/` and are the canonical authoring source.
@@ -301,6 +300,10 @@ start_scoped_interview {
 ```
 
 ## Algorithm Practice
+
+### After a code interview ends
+
+When `end_interview` is called on a session with `interviewType: "code"`, the response includes `algorithmTracker: { required: true }`. The orchestrator **must** call `log_algorithm_problem` before closing the session — this is enforced by the hint in the tool response, not automatically by the server.
 
 ### Path A — Current approach (supported today)
 

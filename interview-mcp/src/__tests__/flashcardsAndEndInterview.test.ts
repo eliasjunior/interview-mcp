@@ -107,6 +107,7 @@ function makeDeps(overrides: Partial<ToolDeps> = {}) {
     loadExercises: () => [] as Exercise[],
     findExerciseByName: () => null,
     saveExercise: () => {},
+    saveAlgorithmProblem: () => {},
     exercisesDir: "/tmp/exercises",
     scopesDir: "/tmp/scopes",
     generateId: () => "generated-id",

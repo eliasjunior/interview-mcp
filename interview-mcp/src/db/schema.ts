@@ -29,6 +29,7 @@ export const sessions = sqliteTable("sessions", {
   questFormat: text("quest_format"),
   questChoices: text("quest_choices"),   // JSON: string[][]
   questAnswers: text("quest_answers"),   // JSON: string[]
+  algorithmLogged: integer("algorithm_logged", { mode: "boolean" }).default(false),
 });
 
 export const sessionQuestions = sqliteTable(

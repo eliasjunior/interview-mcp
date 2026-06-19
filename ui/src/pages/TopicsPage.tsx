@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 
 import { useNavigate } from 'react-router-dom'
 import type { Topic, TopicDetails, TopicLevel, TopicQuestionDetail } from '../api'
 
-import { createScopedInterview, getTopicDetails, getTopicPlans, getTopics, getTopicLevel, updateTopicPlan } from '../api'
+import { getTopicDetails, getTopicPlans, getTopics, getTopicLevel, updateTopicPlan } from '../api'
 import type { TopicPlan, TopicPlanPriority } from '@mock-interview/shared'
 
 const LEVEL_STORAGE_KEY = 'topics-level-snapshot'
@@ -164,14 +164,6 @@ type TopicAction = {
   label: string
   prompt: string
   helper: string
-}
-
-type CustomInterviewDraft = {
-  topic: string
-  problemTitle: string
-  interviewType: 'code' | 'design'
-  focus: string
-  content: string
 }
 
 type TopicQuestionPickerState = {
@@ -341,128 +333,6 @@ function TopicActionLauncher({
   )
 }
 
-function CustomInterviewModal({
-  draft,
-  busy,
-  error,
-  onClose,
-  onChange,
-  onSubmit,
-}: {
-  draft: CustomInterviewDraft
-  busy: boolean
-  error: string | null
-  onClose: () => void
-  onChange: (next: CustomInterviewDraft) => void
-  onSubmit: () => void
-}) {
-  return (
-    <div className="graph-modal-backdrop" onClick={onClose}>
-      <div className="custom-interview-modal" onClick={(event) => event.stopPropagation()}>
-        <div className="graph-modal-header">
-          <div>
-            <h2 className="topics-plan-title">Start Interview With Content</h2>
-            <p className="topics-plan-subtitle">For code interviews, enter a problem name such as Valid Anagram and optionally paste a custom statement. Claude will prepare the full problem, examples, constraints, and tests before the interview.</p>
-          </div>
-          <button className="btn-back" onClick={onClose}>✕ Close</button>
-        </div>
-
-        <div className="custom-interview-form">
-          <label className="custom-interview-field">
-            <span className="custom-interview-label">Topic</span>
-            <input
-              className="custom-interview-input"
-              value={draft.topic}
-              onChange={(event) => onChange({ ...draft, topic: event.target.value })}
-              placeholder="Linked Lists"
-              disabled={busy}
-            />
-          </label>
-
-          <label className="custom-interview-field">
-            <span className="custom-interview-label">Interview type</span>
-            <select
-              className="custom-interview-input"
-              value={draft.interviewType}
-              onChange={(event) => {
-                const interviewType = event.target.value as CustomInterviewDraft['interviewType']
-                onChange({
-                  ...draft,
-                  interviewType,
-                  focus: interviewType === 'code'
-                    ? 'algorithmic reasoning, edge cases, and complexity trade-offs'
-                    : 'robustness, reliability, and extensibility in a production environment',
-                })
-              }}
-              disabled={busy}
-            >
-              <option value="code">Code / algorithm</option>
-              <option value="design">API / architecture design</option>
-            </select>
-          </label>
-
-          <label className="custom-interview-field">
-            <span className="custom-interview-label">Problem</span>
-            <input
-              className="custom-interview-input"
-              value={draft.problemTitle}
-              onChange={(event) => onChange({ ...draft, problemTitle: event.target.value })}
-              placeholder="Delete Middle Node"
-              disabled={busy}
-            />
-          </label>
-
-          <label className="custom-interview-field">
-            <span className="custom-interview-label">Focus</span>
-            <input
-              className="custom-interview-input"
-              value={draft.focus}
-              onChange={(event) => onChange({ ...draft, focus: event.target.value })}
-              placeholder="algorithmic reasoning, edge cases, and complexity trade-offs"
-              disabled={busy}
-            />
-          </label>
-
-          <label className="custom-interview-field">
-            <span className="custom-interview-label">Content</span>
-            <textarea
-              className="custom-interview-textarea"
-              value={draft.content}
-              onChange={(event) => onChange({ ...draft, content: event.target.value })}
-              placeholder={draft.interviewType === 'code'
-                ? 'Optional: paste a custom problem statement. Leave blank to let Claude build it from the problem name.'
-                : 'Paste the project spec or architecture note here.'}
-              rows={12}
-              disabled={busy}
-            />
-          </label>
-
-          {error && <div className="error-msg">{error}</div>}
-
-          <div className="custom-interview-actions">
-            <button className="btn-back" onClick={onClose} disabled={busy}>Cancel</button>
-            <button
-              className="btn-secondary"
-              onClick={onSubmit}
-              disabled={
-                busy ||
-                draft.topic.trim().length === 0 ||
-                (
-                  draft.interviewType === 'code'
-                    ? draft.problemTitle.trim().length === 0 && draft.content.trim().length < 20
-                    : draft.content.trim().length < 20
-                )
-              }
-            >
-              {busy ? 'Creating…' : 'Create session'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function TopicQuestionPickerModal({
   state,
   onClose,
@@ -539,9 +409,6 @@ export default function TopicsPage() {
   const [focusMap, setFocusMap] = useState<Record<string, boolean>>({})
   const [priorityMap, setPriorityMap] = useState<Record<string, TopicPriority>>({})
   const [activeFilter, setActiveFilter] = useState<TopicFilter>('all')
-  const [customInterviewDraft, setCustomInterviewDraft] = useState<CustomInterviewDraft | null>(null)
-  const [customInterviewBusy, setCustomInterviewBusy] = useState(false)
-  const [customInterviewError, setCustomInterviewError] = useState<string | null>(null)
   const [topicQuestionPicker, setTopicQuestionPicker] = useState<TopicQuestionPickerState | null>(null)
   const [loading, setLoading] = useState(true)
   const pageRef = useRef<HTMLDivElement | null>(null)
@@ -723,18 +590,6 @@ export default function TopicsPage() {
     }
   }
 
-  function openCustomInterview(topic = '') {
-    setCustomInterviewDraft({
-      topic,
-      problemTitle: '',
-      interviewType: 'code',
-      focus: 'algorithmic reasoning, edge cases, and complexity trade-offs',
-      content: '',
-    })
-    setCustomInterviewError(null)
-    setActiveMenu(null)
-  }
-
   async function openTopicQuestionPicker(topic: Topic) {
     setTopicQuestionPicker({
       topicFile: topic.file,
@@ -761,36 +616,6 @@ export default function TopicsPage() {
         error: error instanceof Error ? error.message : String(error),
         details: null,
       })
-    }
-  }
-
-  async function handleCreateCustomInterview() {
-    if (!customInterviewDraft || customInterviewBusy) return
-
-    try {
-      setCustomInterviewBusy(true)
-      setCustomInterviewError(null)
-      const created = await createScopedInterview({
-        topic: customInterviewDraft.topic,
-        problemTitle: customInterviewDraft.problemTitle.trim() || undefined,
-        interviewType: customInterviewDraft.interviewType,
-        focus: customInterviewDraft.focus,
-        content: customInterviewDraft.content.trim() || undefined,
-      })
-      setToastQueue(prev => [
-        ...prev,
-        {
-          id: `${created.sessionId}-created`,
-          message: `Created ${created.detectedContentType} interview: ${created.problemTitle ?? created.topic}`,
-          level: 1,
-        },
-      ])
-      setCustomInterviewDraft(null)
-      navigate(`/sessions/${created.sessionId}`)
-    } catch (error) {
-      setCustomInterviewError(error instanceof Error ? error.message : String(error))
-    } finally {
-      setCustomInterviewBusy(false)
     }
   }
 
@@ -852,12 +677,7 @@ export default function TopicsPage() {
             Each topic has a progressive warm-up ladder before the full interview.
           </p>
         </div>
-        <div className="topics-header-actions">
-          <button className="btn-secondary" onClick={() => openCustomInterview()}>
-            Start With Content
-          </button>
-          <span className="topics-count">{topics.length} topics</span>
-        </div>
+        <span className="topics-count">{topics.length} topics</span>
       </div>
 
       <div className="topics-level-legend">
@@ -1120,21 +940,6 @@ export default function TopicsPage() {
         >
           {activeToast.message}
         </div>
-      )}
-
-      {customInterviewDraft && (
-        <CustomInterviewModal
-          draft={customInterviewDraft}
-          busy={customInterviewBusy}
-          error={customInterviewError}
-          onClose={() => {
-            if (customInterviewBusy) return
-            setCustomInterviewDraft(null)
-            setCustomInterviewError(null)
-          }}
-          onChange={setCustomInterviewDraft}
-          onSubmit={() => void handleCreateCustomInterview()}
-        />
       )}
 
       {topicQuestionPicker && (

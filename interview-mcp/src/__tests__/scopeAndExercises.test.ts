@@ -65,6 +65,7 @@ function makeDeps(overrides: Partial<ToolDeps> = {}) {
     saveExercise: (exercise) => {
       exercises.push(exercise);
     },
+    saveAlgorithmProblem: () => {},
     exercisesDir,
     scopesDir,
     generateId: () => `generated-${exercises.length + 1}`,

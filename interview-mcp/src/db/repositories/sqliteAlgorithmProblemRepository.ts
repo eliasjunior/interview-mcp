@@ -21,6 +21,11 @@ export class SQLiteAlgorithmProblemRepository implements AlgorithmProblemReposit
     return row ? this.hydrate(row) : null;
   }
 
+  getByProblem(problem: string): AlgorithmProblemTrackerItem | null {
+    const row = this.db.select().from(algorithmProblems).where(eq(algorithmProblems.problem, problem)).get();
+    return row ? this.hydrate(row) : null;
+  }
+
   insert(item: AlgorithmProblemTrackerItem): void {
     this.db.insert(algorithmProblems).values(this.dehydrate(item)).run();
   }

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { AlgorithmProblemDifficulty, AlgorithmProblemTrackerItem } from '@mock-interview/shared'
 import {
   createAlgorithmProblem,
+  createScopedInterview,
   deleteAlgorithmProblem,
   getAlgorithmProblems,
   updateAlgorithmProblem,
@@ -34,6 +36,14 @@ type PatternGroup = {
   reviewedCount: number
 }
 
+type CustomInterviewDraft = {
+  topic: string
+  problemTitle: string
+  interviewType: 'code'
+  focus: string
+  content: string
+}
+
 function toEditableRow(item: AlgorithmProblemTrackerItem): EditableRow {
   return {
     id: item.id,
@@ -52,6 +62,7 @@ function toEditableRow(item: AlgorithmProblemTrackerItem): EditableRow {
 }
 
 export default function AlgorithmTrackerPage() {
+  const navigate = useNavigate()
   const [items, setItems] = useState<AlgorithmProblemTrackerItem[]>([])
   const [draft, setDraft] = useState<AlgorithmProblemInput>(emptyDraft)
   const [editing, setEditing] = useState<Record<string, EditableRow>>({})
@@ -60,6 +71,10 @@ export default function AlgorithmTrackerPage() {
   const [error, setError] = useState<string | null>(null)
   const [lastReviewedSort, setLastReviewedSort] = useState<LastReviewedSort>('desc')
   const [collapsedPatterns, setCollapsedPatterns] = useState<Record<string, boolean>>({})
+  const [entryExpanded, setEntryExpanded] = useState(false)
+  const [customInterviewDraft, setCustomInterviewDraft] = useState<CustomInterviewDraft | null>(null)
+  const [customInterviewBusy, setCustomInterviewBusy] = useState(false)
+  const [customInterviewError, setCustomInterviewError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -121,6 +136,9 @@ export default function AlgorithmTrackerPage() {
       .sort((a, b) => a.pattern.localeCompare(b.pattern))
   }, [sortedItems])
 
+  const allPatternsCollapsed = patternGroups.length > 0 &&
+    patternGroups.every(group => Boolean(collapsedPatterns[group.pattern]))
+
   async function addProblem() {
     if (!draft.problem.trim()) {
       setError('Problem is required.')
@@ -137,10 +155,44 @@ export default function AlgorithmTrackerPage() {
       })
       setItems(current => [created, ...current])
       setDraft({ ...emptyDraft, dateLastReviewed: new Date().toISOString().slice(0, 10) })
+      setEntryExpanded(false)
     } catch (err) {
       setError(String(err))
     } finally {
       setSavingId(null)
+    }
+  }
+
+  function openCustomInterview(item: AlgorithmProblemTrackerItem) {
+    setCustomInterviewDraft({
+      topic: (item.pattern.trim() || 'Algorithms').toLowerCase(),
+      problemTitle: item.problem.trim(),
+      interviewType: 'code',
+      focus: 'algorithmic reasoning, edge cases, and complexity trade-offs',
+      content: item.problemDescription.trim(),
+    })
+    setCustomInterviewError(null)
+  }
+
+  async function handleCreateCustomInterview() {
+    if (!customInterviewDraft || customInterviewBusy) return
+
+    try {
+      setCustomInterviewBusy(true)
+      setCustomInterviewError(null)
+      const created = await createScopedInterview({
+        topic: customInterviewDraft.topic,
+        problemTitle: customInterviewDraft.problemTitle.trim() || undefined,
+        interviewType: customInterviewDraft.interviewType,
+        focus: customInterviewDraft.focus,
+        content: customInterviewDraft.content.trim() || undefined,
+      })
+      setCustomInterviewDraft(null)
+      navigate(`/sessions/${created.sessionId}`)
+    } catch (err) {
+      setCustomInterviewError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setCustomInterviewBusy(false)
     }
   }
 
@@ -200,21 +252,47 @@ export default function AlgorithmTrackerPage() {
           <h1 className="page-title">Algorithm Tracker</h1>
           <p className="page-subtitle">Track recognition patterns, friction points, mistakes, and recall timing after each problem.</p>
         </div>
-        <div className="algorithm-summary">
-          <span>{items.length} problems</span>
-          <span>{summary.solved} re-solved</span>
-          <span>{summary.due} due</span>
-          <span>{summary.patterns} patterns</span>
+        <div className="algorithm-header-actions">
+          <div className="algorithm-summary">
+            <span>{items.length} problems</span>
+            <span>{summary.solved} re-solved</span>
+            <span>{summary.due} due</span>
+            <span>{summary.patterns} patterns</span>
+          </div>
+          <button
+            className="btn-secondary algorithm-collapse-all"
+            type="button"
+            onClick={toggleAllPatterns}
+            disabled={patternGroups.length === 0}
+          >
+            {allPatternsCollapsed ? 'Expand all' : 'Collapse all'}
+          </button>
         </div>
       </div>
 
       {error && <div className="error-msg algorithm-error">{error}</div>}
 
       <section className="algorithm-entry" aria-label="Add algorithm problem">
-        <TrackerFields value={draft} onChange={setDraft} />
-        <button className="btn-secondary algorithm-add-btn" type="button" onClick={addProblem} disabled={savingId === 'new'}>
-          {savingId === 'new' ? 'Adding...' : '+ Add problem'}
-        </button>
+        <div className="algorithm-entry-header">
+          <button
+            className="algorithm-entry-toggle"
+            type="button"
+            aria-expanded={entryExpanded}
+            onClick={() => setEntryExpanded(current => !current)}
+          >
+            <span className="algorithm-pattern-caret" aria-hidden="true">{entryExpanded ? '▾' : '▸'}</span>
+            <span>Add problem</span>
+          </button>
+          <span className="algorithm-entry-hint">Capture a solved problem after practice.</span>
+        </div>
+        {entryExpanded && (
+          <>
+            <TrackerFields value={draft} onChange={setDraft} />
+            <button className="btn-secondary algorithm-add-btn" type="button" onClick={addProblem} disabled={savingId === 'new'}>
+              {savingId === 'new' ? 'Adding...' : '+ Add problem'}
+            </button>
+          </>
+        )}
       </section>
 
       {items.length === 0 ? (
@@ -262,11 +340,27 @@ export default function AlgorithmTrackerPage() {
                   onSave={saveRow}
                   onDelete={removeRow}
                   onUpdateEditing={updateEditing}
+                  onStartInterview={openCustomInterview}
                 />
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {customInterviewDraft && (
+        <CustomInterviewModal
+          draft={customInterviewDraft}
+          busy={customInterviewBusy}
+          error={customInterviewError}
+          onClose={() => {
+            if (customInterviewBusy) return
+            setCustomInterviewDraft(null)
+            setCustomInterviewError(null)
+          }}
+          onChange={setCustomInterviewDraft}
+          onSubmit={() => void handleCreateCustomInterview()}
+        />
       )}
     </div>
   )
@@ -294,6 +388,116 @@ export default function AlgorithmTrackerPage() {
   function togglePattern(pattern: string) {
     setCollapsedPatterns(current => ({ ...current, [pattern]: !current[pattern] }))
   }
+
+  function toggleAllPatterns() {
+    if (allPatternsCollapsed) {
+      setCollapsedPatterns({})
+      return
+    }
+
+    setCollapsedPatterns(Object.fromEntries(
+      patternGroups.map(group => [group.pattern, true])
+    ))
+  }
+}
+
+function CustomInterviewModal({
+  draft,
+  busy,
+  error,
+  onClose,
+  onChange,
+  onSubmit,
+}: {
+  draft: CustomInterviewDraft
+  busy: boolean
+  error: string | null
+  onClose: () => void
+  onChange: (next: CustomInterviewDraft) => void
+  onSubmit: () => void
+}) {
+  return (
+    <div className="graph-modal-backdrop" onClick={onClose}>
+      <div className="custom-interview-modal" onClick={(event) => event.stopPropagation()}>
+        <div className="graph-modal-header">
+          <div>
+            <h2 className="topics-plan-title">Start Interview With Content</h2>
+            <p className="topics-plan-subtitle">Enter an algorithm problem name and optionally paste a custom statement. Claude will prepare the full problem, examples, constraints, and tests before the interview.</p>
+          </div>
+          <button className="btn-back" onClick={onClose}>✕ Close</button>
+        </div>
+
+        <div className="custom-interview-form">
+          <label className="custom-interview-field">
+            <span className="custom-interview-label">Topic</span>
+            <input
+              className="custom-interview-input"
+              value={draft.topic}
+              onChange={(event) => onChange({ ...draft, topic: event.target.value })}
+              placeholder="Linked Lists"
+              disabled={busy}
+            />
+          </label>
+
+          <label className="custom-interview-field">
+            <span className="custom-interview-label">Interview type</span>
+            <input className="custom-interview-input" value="Code / algorithm" disabled />
+          </label>
+
+          <label className="custom-interview-field">
+            <span className="custom-interview-label">Problem</span>
+            <input
+              className="custom-interview-input"
+              value={draft.problemTitle}
+              onChange={(event) => onChange({ ...draft, problemTitle: event.target.value })}
+              placeholder="Delete Middle Node"
+              disabled={busy}
+            />
+          </label>
+
+          <label className="custom-interview-field">
+            <span className="custom-interview-label">Focus</span>
+            <input
+              className="custom-interview-input"
+              value={draft.focus}
+              onChange={(event) => onChange({ ...draft, focus: event.target.value })}
+              placeholder="algorithmic reasoning, edge cases, and complexity trade-offs"
+              disabled={busy}
+            />
+          </label>
+
+          <label className="custom-interview-field">
+            <span className="custom-interview-label">Content</span>
+            <textarea
+              className="custom-interview-textarea"
+              value={draft.content}
+              onChange={(event) => onChange({ ...draft, content: event.target.value })}
+              placeholder="Optional: paste a custom problem statement. Leave blank to let Claude build it from the problem name."
+              rows={12}
+              disabled={busy}
+            />
+          </label>
+
+          {error && <div className="error-msg">{error}</div>}
+
+          <div className="custom-interview-actions">
+            <button className="btn-back" onClick={onClose} disabled={busy}>Cancel</button>
+            <button
+              className="btn-secondary"
+              onClick={onSubmit}
+              disabled={
+                busy ||
+                draft.topic.trim().length === 0 ||
+                (draft.problemTitle.trim().length === 0 && draft.content.trim().length < 20)
+              }
+            >
+              {busy ? 'Creating...' : 'Create session'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function PatternGroupRows({
@@ -307,6 +511,7 @@ function PatternGroupRows({
   onSave,
   onDelete,
   onUpdateEditing,
+  onStartInterview,
 }: {
   group: PatternGroup
   collapsed: boolean
@@ -318,6 +523,7 @@ function PatternGroupRows({
   onSave: (id: string) => void
   onDelete: (id: string) => void
   onUpdateEditing: (id: string, patch: Partial<EditableRow>) => void
+  onStartInterview: (item: AlgorithmProblemTrackerItem) => void
 }) {
   return (
     <>
@@ -342,7 +548,19 @@ function PatternGroupRows({
         const editingRow = Boolean(row)
         return (
           <tr key={item.id} className={isDue(item) ? 'algorithm-row-due' : undefined}>
-            <td>{editingRow ? <TextInput value={display.problem} onChange={value => onUpdateEditing(item.id, { problem: value })} /> : item.problem}</td>
+            <td>
+              {editingRow ? (
+                <TextInput value={display.problem} onChange={value => onUpdateEditing(item.id, { problem: value })} />
+              ) : (
+                <button
+                  className="algorithm-problem-link"
+                  type="button"
+                  onClick={() => onStartInterview(item)}
+                >
+                  {item.problem}
+                </button>
+              )}
+            </td>
             <td>{editingRow ? <TextArea value={display.problemDescription} onChange={value => onUpdateEditing(item.id, { problemDescription: value })} /> : item.problemDescription || '-'}</td>
             <td>{editingRow ? <TextInput value={display.pattern} onChange={value => onUpdateEditing(item.id, { pattern: value })} /> : item.pattern || '-'}</td>
             <td>

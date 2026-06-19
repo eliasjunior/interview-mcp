@@ -114,6 +114,7 @@ export function mapSessionToNormalizedRecord(session: Session): NormalizedSessio
       questFormat: session.questFormat ?? null,
       questChoices: session.questChoices != null ? JSON.stringify(session.questChoices) : null,
       questAnswers: session.questAnswers != null ? JSON.stringify(session.questAnswers) : null,
+      algorithmLogged: session.algorithmLogged ?? false,
     },
     questions: session.questions.map((question, position) => ({
       sessionId: session.id,
@@ -231,6 +232,7 @@ export function mapSessionAggregateToDomain(rows: SessionAggregateRows): Session
     questFormat: (rows.session.questFormat as Session["questFormat"]) ?? undefined,
     questChoices: rows.session.questChoices != null ? JSON.parse(rows.session.questChoices) as string[][] : undefined,
     questAnswers: rows.session.questAnswers != null ? JSON.parse(rows.session.questAnswers) as string[] : undefined,
+    algorithmLogged: rows.session.algorithmLogged ?? undefined,
   };
 }
 
