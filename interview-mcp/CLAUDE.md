@@ -26,7 +26,7 @@ Reframing or adding context changes intent, difficulty, and which choices are co
 ```
 interview-mcp/
 ├── src/
-│   ├── server.ts               # MCP bootstrap, registers 26 tools
+│   ├── server.ts               # MCP bootstrap, registers 36 tools
 │   ├── http.ts                 # Express REST API port 3001
 │   ├── tools/                  # One file per MCP tool
 │   ├── ai/                     # DEPRECATED, not using anymore - AIProvider port + Anthropic adapter (haiku model)
@@ -56,7 +56,9 @@ To add or edit topic content: update the Markdown source under `data/knowledge/`
 
 Session states: `ASK_QUESTION → WAIT_FOR_ANSWER → EVALUATE_ANSWER → FOLLOW_UP` (loops), then `ENDED`.
 
-**26 MCP tools:** `server_status`, `help_tools`, `start_interview`, `start_scoped_interview`, `start_drill`, `ask_question`, `submit_answer`, `evaluate_answer`, `ask_followup`, `next_question`, `end_interview`, `get_session`, `list_sessions`, `list_topics`, `get_due_flashcards`, `review_flashcard`, `evaluate_flashcard`, `save_flashcard_evaluation`, `log_mistake`, `list_mistakes`, `add_skill`, `list_skills`, `update_skill`, `practice_micro_skill`, `create_exercise`, `list_exercises`
+**36 MCP tools:** `server_status`, `help_tools`, `start_interview`, `start_scoped_interview`, `ask_question`, `submit_answer`, `evaluate_answer`, `ask_followup`, `next_question`, `end_interview`, `get_session`, `list_sessions`, `list_topics`, `get_due_flashcards`, `prepare_flashcards`, `create_flashcard`, `review_flashcard`, `log_mistake`, `list_mistakes`, `start_drill`, `add_skill`, `list_skills`, `update_skill`, `practice_micro_skill`, `create_exercise`, `list_exercises`, `build_scope`, `delete_session`, `generate_flashcard_variation`, `get_topic_level`, `start_warm_up`, `evaluate_flashcard`, `save_flashcard_evaluation`, `configure_code_challenge`, `run_code`, `log_algorithm_problem`
+
+See [`src/tools/CLAUDE.md`](src/tools/CLAUDE.md) for the full breakdown by tool group.
 
 **REST API (port 3001):**
 - `GET /api/sessions` — all sessions

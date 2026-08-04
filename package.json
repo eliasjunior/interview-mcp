@@ -14,7 +14,7 @@
     "build:interview": "npm run build -w interview-mcp",
     "build:report": "npm run build -w report-mcp",
     "build:ui": "npm run build -w ui",
-    "dev": "concurrently -n http,ui -c blue,green \"npm run dev:http\" \"npm run dev:ui\"",
+    "dev": "concurrently --kill-others-on-fail -n http,ui -c blue,green \"npm run dev:http\" \"npm run dev:ui\"",
     "dev:interview": "npm run dev -w interview-mcp",
     "dev:http": "npm run dev:http:network -w interview-mcp",
     "dev:report": "npm run dev -w report-mcp",

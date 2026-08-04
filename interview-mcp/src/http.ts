@@ -3,6 +3,7 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import path from "path";
+import os from "os";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import { registerWeakReportRoutes } from "./http/weakReports.js";
@@ -786,6 +787,17 @@ registerWeakReportRoutes(app, {
 });
 
 app.listen(PORT, HOST, () => {
-  const displayHost = HOST === "0.0.0.0" ? "localhost" : HOST;
-  console.log(`Neural map server running at http://${displayHost}:${PORT} (bound to ${HOST})`);
+  console.log(`Backend API ready`);
+  console.log(`  Local:   http://localhost:${PORT}/api`);
+
+  if (HOST === "0.0.0.0") {
+    const networkAddresses = Object.values(os.networkInterfaces())
+      .flatMap((interfaces) => interfaces ?? [])
+      .filter((address) => address.family === "IPv4" && !address.internal)
+      .map((address) => address.address);
+
+    for (const address of [...new Set(networkAddresses)]) {
+      console.log(`  Network: http://${address}:${PORT}/api`);
+    }
+  }
 });

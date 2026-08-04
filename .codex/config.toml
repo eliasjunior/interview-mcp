@@ -1,16 +1,9 @@
 [mcp_servers.interview-mcp]
 command = "/usr/bin/env"
 args = [
-    "node",
-    "dist/server.js",
+  "node",
+  "/Users/eliasjunior/Projects/ai-projects/interview-forge/interview-mcp/dist/server.js",
 ]
 
-[mcp_servers.report-mcp]
-command = "/usr/bin/env"
-args = [
-    "node",
-    "dist/server.js",
-]
-
-[mcp_servers.report-mcp.env]
+[mcp_servers.interview-mcp.env]
 AI_ENABLED = "false"
