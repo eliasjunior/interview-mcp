@@ -61,6 +61,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get("/api/health", (_req, res) => {
+  res.json({
+    ok: true,
+    service: "interview-forge-api",
+  });
+});
+
 // Serve the neural map frontend
 app.use(express.static(PUBLIC_DIR));
 

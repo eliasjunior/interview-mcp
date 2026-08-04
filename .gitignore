@@ -15,6 +15,9 @@ interview-mcp/data/*.bak
 interview-mcp/data/app.db.*
 interview-mcp/data/backups/
 
+# Local runtime logs and launcher state
+.local/
+
 # macOS metadata
 .DS_Store
 **/.DS_Store

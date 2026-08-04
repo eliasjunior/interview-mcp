@@ -23,20 +23,39 @@ git clone https://github.com/eliasjunior/interview-forge.git
 cd interview-forge
 npm install
 cp interview-mcp/.env.example interview-mcp/.env
-npm run dev:http
+scripts/start-interview-forge.command
 ```
 
-In a second terminal:
+If macOS says the startup script is not executable, run this once and try again:
 
 ```bash
-npm run dev:ui
+chmod +x scripts/start-interview-forge.command
+scripts/start-interview-forge.command
 ```
 
-Then open:
+The startup script launches the HTTP API and Vite UI, reuses them if they are already running, reports port conflicts, and writes logs to `.local/logs/api.log` and `.local/logs/ui.log`.
+
+When the launcher prints that `interview-forge` is ready, open:
 
 - `http://localhost:5173`
 - `http://localhost:5173/graph`
 - `http://localhost:5173/flashcards`
+
+Press `Ctrl-C` in the launcher terminal to stop services started by the script.
+
+### Manual startup
+
+If you prefer to run each service yourself, start the API first:
+
+```bash
+npm run dev:http
+```
+
+In a second terminal, start the UI:
+
+```bash
+npm run dev:ui
+```
 
 Full setup, MCP connection, and troubleshooting: [Getting started](docs/getting-started.md)
 
